@@ -1,1 +1,1 @@
-Testing Cold Email
+Hi {name} at {company}, I'm just Testing Coldmailer
