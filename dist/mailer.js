@@ -63,7 +63,8 @@ const mailer = (email, subject, body) => __awaiter(void 0, void 0, void 0, funct
     new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                reject(error);
+                console.error("\x1b[31m%s\x1b[0m", `Error: ${error.toString(), error}`);
+                ;
             }
             else {
                 resolve(info.response);

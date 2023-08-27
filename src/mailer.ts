@@ -33,6 +33,7 @@ if (fs.existsSync(jsonPath)) {
   console.error("\x1b[31m%s\x1b[0m", "Error: mailconfig.json file not found!");
   process.exit(1);
 }
+
 const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -52,7 +53,7 @@ const mailer = async (email: string, subject: string, body: string) => {
   new Promise((resolve, reject) => {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        reject(error);
+        console.error("\x1b[31m%s\x1b[0m", `Error: ${error.toString(), error}`);;
       } else {
         resolve(info.response);
       }

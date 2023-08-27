@@ -30,7 +30,8 @@ Please write something in the message.txt, a guide can be found in the README.md
           const fakeName = "Anderson";
           const fakeCompany = "Google";
           const exampleMessage = message.replace(/\{name\}/g, fakeName).replace(/\{company\}/g, fakeCompany);
-          console.log(exampleMessage + "\n\nAbove is an example of the message to be customised and sent to each recipient, do you wish to proceed?");
+          console.log(exampleMessage);
+          console.log('\x1b[33m%s\x1b[0m', "\nAbove is an example of the message to be customised and sent to each recipient, do you wish to proceed?");
           readline.question("Type 'Y' to continue, and any other key to not: ", (arg) => {
             if (!(arg === 'Y' || arg === 'y')) {
               process.exit();
@@ -63,11 +64,12 @@ Please write something in the message.txt, a guide can be found in the README.md
                     process.exit(1);
                   }
                   const P: Promise<void> = new Promise<void>((resolve, reject) => {
-                  const Subject: string = `Hello ${data['name']}, welcome to ${data['company']}`;
+                  const sSubject: string = `Hello ${data['name']}, welcome to ${data['company']}`;
                   const body: string = `<h1>Hello ${data['name']}, welcome to ${data['company']}.</h1>\nI'm just testing this out, so don't mind me.`;
-                  const Body = message.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']);//.replace(/\r\n/g, "<br>");
-                  subject = subject.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']);//.replace(/\r\n/g, "<br>");
-                  mailer(data['email'], subject, `${Body}`)
+                  const Body: string = message.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']);//.replace(/\r\n/g, "<br>");
+                  const Subject = subject.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']);//.replace(/\r\n/g, "<br>");
+                  console.log(Subject);
+                  mailer(data['email'], Subject, `${Body}`)
                     .then(() => {
                       data['sentMail'] = true;
                       results.push(data);
