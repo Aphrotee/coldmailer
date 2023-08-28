@@ -11,7 +11,7 @@ const results = [];
 const tasks = [];
 let subject = '';
 let message = '';
-const dataPath = './testdata0.csv';
+const dataPath = './data.csv';
 const messagePath = './message.txt';
 const subjectPath = './subject.txt';
 const readline = readline_1.default.createInterface({
@@ -44,12 +44,12 @@ Please write something in the message.txt, a guide can be found in the README.md
                     if (fs_1.default.existsSync(subjectPath)) {
                         subject = fs_1.default.readFileSync(subjectPath, 'utf-8').toString();
                         if (!subject) {
-                            console.log('\x1b[31m%s\x1b[0m', "Error: Please give your email a subject in the subject.txt file.");
+                            console.error('\x1b[31m%s\x1b[0m', "Error: Please give your email a subject in the subject.txt file.");
                             process.exit(1);
                         }
                     }
                     else {
-                        console.log('\x1b[31m%s\x1b[0m', "Error: subject.txt file not found!");
+                        console.error('\x1b[31m%s\x1b[0m', "Error: subject.txt file not found!");
                         process.exit(1);
                     }
                     // console.log("subject: ", subject);
@@ -59,15 +59,15 @@ Please write something in the message.txt, a guide can be found in the README.md
                             .on('data', (data) => {
                             data['sentMail'] = false;
                             if (!("name" in data)) {
-                                console.log('\x1b[31m%s\x1b[0m', "Error: I could not seem to find the 'name' field in the csv file, do something about it");
+                                console.error('\x1b[31m%s\x1b[0m', "Error: I could not seem to find the 'name' field in the csv file, do something about it");
                                 process.exit(1);
                             }
                             else if (!("email" in data)) {
-                                console.log('\x1b[31m%s\x1b[0m', "Error: I could not seem to find the 'email' field in the csv file, do something about it");
+                                console.error('\x1b[31m%s\x1b[0m', "Error: I could not seem to find the 'email' field in the csv file, do something about it");
                                 process.exit(1);
                             }
                             else if (!("company" in data)) {
-                                console.log('\x1b[31m%s\x1b[0m', "Error: I could not seem to find the 'company' field in the csv file, do something about it");
+                                console.error('\x1b[31m%s\x1b[0m', "Error: I could not seem to find the 'company' field in the csv file, do something about it");
                                 process.exit(1);
                             }
                             const P = new Promise((resolve, reject) => {
@@ -75,9 +75,9 @@ Please write something in the message.txt, a guide can be found in the README.md
                                 const body = `<h1>Hello ${data['name']}, welcome to ${data['company']}.</h1>\nI'm just testing this out, so don't mind me.`;
                                 const Body = message.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']); //.replace(/\r\n/g, "<br>");
                                 const Subject = subject.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']); //.replace(/\r\n/g, "<br>");
-                                console.log(Subject);
                                 (0, mailer_js_1.default)(data['email'], Subject, `${Body}`)
-                                    .then(() => {
+                                    .then(info => {
+                                    console.log('Email sent to ' + data['email']);
                                     data['sentMail'] = true;
                                     results.push(data);
                                     resolve();
@@ -85,7 +85,16 @@ Please write something in the message.txt, a guide can be found in the README.md
                                     .catch(err => {
                                     data['sentMail'] = false;
                                     results.push(data);
-                                    reject(err);
+                                    if (err.toString().includes("Invalid login")) {
+                                        console.error('\x1b[31m%s\x1b[0m', `Error: ${err.message}\n\nThere is an issue with your login credentials,\
+ please confirm the credentials (email and password)\
+ are correct and that they are properly written in the mailconfig.json.\
+ You can as well refer to the README.md for instructions on how to get your login credentials.`);
+                                    }
+                                    else if (err.toString().includes("getaddrinfo ENOTFOUND")) {
+                                        console.error('\x1b[31m%s\x1b[0m', "Error: Unable to esablish smtp connection, please check your internet connection");
+                                    }
+                                    process.exit(1);
                                 });
                             });
                             tasks.push(P);
@@ -93,11 +102,13 @@ Please write something in the message.txt, a guide can be found in the README.md
                             .on('end', () => {
                             if (tasks.length > 0) {
                                 console.log('\x1b[33m%s\x1b[0m', 'sending emails...');
-                                Promise.all(tasks);
+                                Promise.allSettled(tasks)
+                                    .then((val) => console.log('\x1b[32m%s\x1b[0m', `then emails sent!\nReport:\n${results}\n${val}`))
+                                    .finally(() => console.log(results));
                                 resolve(results);
                             }
                             else {
-                                console.log('\x1b[31m%s\x1b[0m', "Error: There is no data in the csv file you provided, so it isn't useful, please supply a non-empty file");
+                                console.error('\x1b[31m%s\x1b[0m', "Error: There is no data in the csv file you provided, so it isn't useful, please supply a non-empty file");
                                 process.exit(1);
                             }
                         });
@@ -110,15 +121,15 @@ Please write something in the message.txt, a guide can be found in the README.md
         });
     }
     else {
-        console.log('\x1b[31m%s\x1b[0m', "Error: message.txt file not found!");
+        console.error('\x1b[31m%s\x1b[0m', "Error: message.txt file not found!");
         process.exit(1);
     }
 });
 p
     .then(results => {
-    console.log('\x1b[32m%s\x1b[0m', 'emails sent!\nReport:\n', results);
+    // console.log('\x1b[32m%s\x1b[0m', 'emails sent!\nReport:\n', results);
 })
     .catch(err => {
-    console.log('\x1b[31m%s\x1b[0m', `Error: ${err}`);
+    console.error('\x1b[31m%s\x1b[0m', `Error: ${err}`);
     process.exit(1);
 });

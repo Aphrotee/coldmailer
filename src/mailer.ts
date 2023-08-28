@@ -1,3 +1,4 @@
+import { rejects } from 'assert';
 import fs from 'fs';
 import nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -42,7 +43,7 @@ const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodem
   }
 });
 
-const mailer = async (email: string, subject: string, body: string) => {
+function mailer(email: string, subject: string, body: string): Promise<string> {
   const mailOptions = {
     from: 'Chatt Instant Messaging',
     to: email,
@@ -50,18 +51,15 @@ const mailer = async (email: string, subject: string, body: string) => {
     text: body
   };
 
-  new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("\x1b[31m%s\x1b[0m", `Error: ${error.toString(), error}`);;
+        reject(error);
       } else {
         resolve(info.response);
       }
     });
-  })
-    .then((response) => {
-      console.log('Email sent to ' + email);
-    })
+  });
 }
   
   export default mailer;
