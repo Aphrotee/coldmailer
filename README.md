@@ -21,9 +21,11 @@ Make sure there are no empty lines in the csv file.
 
 Update the `mailconfig.json` file with the appropriate details.
 
-`email` is the email addressed to be used to send the emails.
+`email` is the email address to be used to send the emails.
 
 `password` is a special app password generated on your google account and NOT your google account login password. Here's a [guide to generate an app password](https://support.google.com/accounts/answer/185833?hl=en).
+
+`senderName` is the name that should apper on the email as stating the sender name.
 
 
 For the email subject and email body, the contents are to be put in the `subject.txt` and `message.txt` files respectively. The content can be customised for each recipient using the name and company in the  csv file.

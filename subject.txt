@@ -1,1 +1,0 @@
-Hi {name} at {company}, I'm just Testing Coldmailer
