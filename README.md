@@ -11,8 +11,7 @@ Go into the directory:
 `$ cd coldmailer`
 
 You need the latest version of nodejs:
-Download for [windows](https://nodejs.org/en/download)
-Download for [linux](https://nodejs.org/en/download/package-manager)
+Download for [windows](https://nodejs.org/en/download), download for [linux](https://nodejs.org/en/download/package-manager)
 
 `$ npm install`
 
