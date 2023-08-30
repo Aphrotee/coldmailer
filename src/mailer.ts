@@ -1,57 +1,65 @@
 import fs from 'fs';
 import nodemailer from 'nodemailer';
+import throwError from './throwError.js';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 const jsonPath: string = './mailconfig.json'
-let Name: string = "";
-let Email: string = "";
-let Password: string = "";
+let credentials: { Name: string; Email: string; Password: string; } = { 'Name': '', 'Email': '', 'Password': '' };
 
 
-/* check if mailconfig json file exists */
-if (fs.existsSync(jsonPath)) {
+function extractCredentials(jsonData: object & Record<"senderName", string> & Record<"email", string> & Record<"password", string>): { Name: string; Email: string; Password: string; } {
 
-  /* read the mailconfig json file */
-  try {
-    const jsonString: string = fs.readFileSync(jsonPath, 'utf-8');
-    const jsonData = JSON.parse(jsonString);
-
-    /* check if the required fields are present and filled otherwise throws respective error */
-    if (!("senderName" in jsonData) || !jsonData['senderName']) {
-      console.error("\x1b[31m%s\x1b[0m", "Error: sender name misssing. Enter your name in the mailconfig.json file");
-      process.exit(1);
-    } else if (!("email" in jsonData) || !jsonData['email']) {
-      console.error("\x1b[31m%s\x1b[0m", "Error: sender email missing. Enter your email in the mailconfig.json file.)");
-      process.exit(1);
-    } else if (!("password" in jsonData) || !jsonData['password']) {
-      console.error("\x1b[31m%s\x1b[0m", "Error: password not found. Enter your special app password in the mailconfig.json file and NOT your google account login password");
-      process.exit(1);
-    }
-    Name = jsonData['senderName'].trim();
-    Email = jsonData['email'].trim();
-    Password = jsonData['password'].trim();
-  } catch (err: any) {
-    console.error("\x1b[31m%s\x1b[0m", `Error: ${err.toString()}`);
+  /* check if the required fields are present and filled then extracts credentials otherwise throws respective error */
+  if (!("senderName" in jsonData) || !jsonData['senderName']) {
+    throwError("Error: sender name misssing. Enter your name in the mailconfig.json file.");
+  } else if (!("email" in jsonData) || !jsonData['email']) {
+    throwError("Error: sender email missing. Enter your email in the mailconfig.json file.");
+  } else if (!("password" in jsonData) || !jsonData['password']) {
+    throwError("Error: password not found. Enter your special app password in the mailconfig.json file\
+ and NOT your google account login password, refer to the README.md for a guide on how to generate yours.");
   }
-} else {
-  console.error("\x1b[31m%s\x1b[0m", "Error: mailconfig.json file not found!");
-  process.exit(1);
+  const Name: string = jsonData['senderName'].trim();
+  const Email: string = jsonData['email'].trim();
+  const Password: string = jsonData['password'].trim();
+
+  return { Name, Email, Password };
+
 }
+
+(function parseJSON() : void {
+  /* check if mailconfig json file exists */
+  if (fs.existsSync(jsonPath)) {
+
+    /* read the mailconfig json file */
+    try {
+      const jsonString: string = fs.readFileSync(jsonPath, 'utf-8');
+      const jsonData = JSON.parse(jsonString);
+
+      /* attempts to extract credentials */
+      credentials = extractCredentials(jsonData);
+
+    } catch (err: any) {
+      throwError(`Error: ${err.toString()}`);
+    }
+  } else {
+    throwError("Error: mailconfig.json file not found!");
+  }
+})();
 
 /* create and configure transporter object */
 const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: Email,
-    pass: Password
+    user: credentials['Email'],
+    pass: credentials['Password']
   }
 });
 
-function mailer({ email, subject, body }: { email: string; subject: string; body: string; }): Promise<string> {
+export default function mailer({ email, subject, body }: { email: string; subject: string; body: string; }): Promise<string> {
 
   /* create mail options */
   const mailOptions = {
-    from: `${Name} <${Email}>`,
+    from: `${credentials['Name']} <${credentials['Email']}>`,
     to: email,
     subject: subject,
     text: body
@@ -59,7 +67,7 @@ function mailer({ email, subject, body }: { email: string; subject: string; body
 
   /* send mail */
   return new Promise((resolve, reject) => {
-    transporter.sendMail(mailOptions, (error, info) => {
+    transporter.sendMail(mailOptions, (error: Error | null, info: object & Record<"response", string>): void => {
       if (error) {
         reject(error);
       } else {
@@ -68,5 +76,3 @@ function mailer({ email, subject, body }: { email: string; subject: string; body
     });
   });
 }
-  
-export default mailer;
