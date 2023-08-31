@@ -118,8 +118,11 @@ class Coldmailer {
         const fakeCompany = "Google";
         /* remove leading and trailing whitespace */
         this.message = this.message.trim();
+        this.subject = this.subject.trim();
+        const exampleSubject = this.subject.replace(/\{name\}/g, fakeName).replace(/\{company\}/g, fakeCompany);
         const exampleMessage = this.message.replace(/\{name\}/g, fakeName).replace(/\{company\}/g, fakeCompany);
-        console.log(exampleMessage);
+        console.log('\x1b[33mSubject:\n\x1b[0m%s\n', exampleSubject);
+        console.log('\x1b[33mMessage body:\n\x1b[0m%s', exampleMessage);
         console.log('\x1b[33m%s\x1b[0m', "\nAbove is an example of the message to be customised and sent to each recipient, do you wish to proceed?");
     }
     execute(arg) {
@@ -128,8 +131,6 @@ class Coldmailer {
             process.exit();
         }
         this.readline.close();
-        /* parse subject text file and process it's content */
-        this.parseSubject();
         /* parse csv file and process it's coontent */
         this.parseCSV();
     }
@@ -150,6 +151,8 @@ class Coldmailer {
 Write something in the message.txt, a guide can be found in the README.md at the root of this folder.");
                     }
                     else {
+                        /* parse subject text file and process it's content */
+                        this.parseSubject();
                         /* show the user a customized example of what will be sent out */
                         this.showExample();
                         /* prompts user to proceed to sending mails or not */
