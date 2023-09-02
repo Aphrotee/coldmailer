@@ -5,12 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const fs_1 = __importDefault(require("fs"));
-const mailer_js_1 = __importDefault(require("./mailer.js"));
+const mailer_js_1 = require("./mailer.js");
 const readline_1 = __importDefault(require("readline"));
 const throwError_js_1 = __importDefault(require("./throwError.js"));
 class Coldmailer {
     constructor() {
-        this.results = [];
         this.tasks = [];
         this.subject = '';
         this.message = '';
@@ -31,23 +30,29 @@ class Coldmailer {
             /* create customized subject and email body for each recipient */
             const Body = this.message.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']);
             const Subject = this.subject.replace(/\{name\}/g, data['name']).replace(/\{company\}/g, data['company']);
-            (0, mailer_js_1.default)({ email: data['email'], subject: Subject, body: Body })
+            (0, mailer_js_1.mailer)({ email: data['email'], subject: Subject, body: Body })
                 .then(info => {
                 console.log('Email sent to ' + data['email']);
-                this.results.push(data);
                 resolve();
             })
                 .catch(err => {
-                this.results.push(data);
                 /* catch possible errors when sending emails and throw them with suitable and more understandable error messages */
                 if (err.toString().includes("Invalid login")) {
-                    (0, throwError_js_1.default)(`Error: ${err.message}\n\nThere is an issue with your login credentials,\
+                    if (err.toString().includes("Too many login attempts")) {
+                        (0, throwError_js_1.default)("Error: Too many login attempts, try again later.");
+                        // transporter.close();
+                    }
+                    else {
+                        (0, throwError_js_1.default)(`Error: ${err.message}\n\nThere is an issue with your login credentials,\
  confirm the credentials (email and password)\
  are correct and that they are properly written in the mailconfig.json.\
  Refer to the README.md for instructions on how to get your login credentials.`);
+                        mailer_js_1.transporter.close();
+                    }
                 }
                 else if (err.toString().includes("getaddrinfo ENOTFOUND")) {
                     (0, throwError_js_1.default)("Error: Unable to esablish smtp connection, check your internet connection.");
+                    mailer_js_1.transporter.close();
                 }
             });
         });
@@ -84,10 +89,18 @@ class Coldmailer {
                 .on('end', () => {
                 /* executes pending tasks (email dissemination) if they exists (if csv file is not empty) */
                 if (this.tasks.length > 0) {
-                    console.log('\x1b[33m%s\x1b[0m', 'sending emails...');
-                    /* trigger promise fulfilment i.e task execution */
-                    Promise.all(this.tasks)
-                        .then((val) => console.log('\x1b[32m%s\x1b[0m', 'emails sent!'));
+                    if (this.tasks.length > 100) {
+                        (0, throwError_js_1.default)("Error: The csv file contains more than 100 rows of data, reducee it.");
+                    }
+                    else {
+                        console.log('\x1b[33m%s\x1b[0m', 'sending emails...\n');
+                        /* trigger promise fulfilment i.e task execution */
+                        Promise.allSettled(this.tasks)
+                            .then((val) => {
+                            console.log('\x1b[32m%s\x1b[0m', `\n${mailer_js_1.count} emails sent!`);
+                            mailer_js_1.transporter.close();
+                        });
+                    }
                 }
                 else {
                     (0, throwError_js_1.default)("Error: There is no data in the csv file you provided, supply a non-empty csv file.");
