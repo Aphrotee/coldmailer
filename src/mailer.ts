@@ -1,7 +1,7 @@
 import fs from 'fs';
 import nodemailer from 'nodemailer';
 import throwError from './throwError.js';
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import SMTPPool from 'nodemailer/lib/smtp-pool/index.js';
 
 const jsonPath: string = './mailconfig.json'
 let credentials: { Name: string; Email: string; Password: string; } = { 'Name': '', 'Email': '', 'Password': '' };
@@ -47,15 +47,18 @@ function extractCredentials(jsonData: object & Record<"senderName", string> & Re
 })();
 
 /* create and configure transporter object */
-const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> = nodemailer.createTransport({
+const transporter: nodemailer.Transporter<SMTPPool.SentMessageInfo> = nodemailer.createTransport({
   service: 'gmail',
+  pool: true,
   auth: {
     user: credentials['Email'],
     pass: credentials['Password']
   }
 });
 
-export default function mailer({ email, subject, body }: { email: string; subject: string; body: string; }): Promise<string> {
+let count: number = 0;
+
+function mailer({ email, subject, body }: { email: string; subject: string; body: string; }): Promise<string> {
 
   /* create mail options */
   const mailOptions = {
@@ -65,14 +68,39 @@ export default function mailer({ email, subject, body }: { email: string; subjec
     text: body
   };
 
-  /* send mail */
-  return new Promise((resolve, reject) => {
-    transporter.sendMail(mailOptions, (error: Error | null, info: object & Record<"response", string>): void => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(info.response);
-      }
+  /* define the number of retries and delay in milliseconds between retries */
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 second
+
+  /* send mail with retries */
+  const sendMailWithRetries = (retriesLeft: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (error: Error | null, info: object & Record<"response", string>) => {
+        if (error) {
+          if (retriesLeft > 0) {
+
+            /* retry sending the email after a delay */
+            setTimeout(() => {
+              sendMailWithRetries(retriesLeft - 1)
+                .then(resolve)
+                .catch(reject);
+            }, retryDelay);
+          } else {
+
+            /* no more retries left, reject with the final error */
+            reject(error);
+          }
+        } else {
+          // console.log(retriesLeft);
+          count += 1
+          resolve(info.response);
+        }
+      });
     });
-  });
+  };
+
+  return sendMailWithRetries(maxRetries);
+
 }
+
+export { mailer, transporter, count };

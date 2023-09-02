@@ -54,4 +54,6 @@ Run the following commands:
 
 `$ npm start`
 
+NOTE: Because of the possible internet issues while the program runs, you are limited to sending 100 emails at a time in order to ensure all emails are sent succesfully, so yor csv file should not have more that 100 rows of data.
+
 All errors come with reasons causing them and ways to eliminate such errors.

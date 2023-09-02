@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.count = exports.transporter = exports.mailer = void 0;
 const fs_1 = __importDefault(require("fs"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const throwError_js_1 = __importDefault(require("./throwError.js"));
@@ -46,11 +47,15 @@ function extractCredentials(jsonData) {
 /* create and configure transporter object */
 const transporter = nodemailer_1.default.createTransport({
     service: 'gmail',
+    pool: true,
     auth: {
         user: credentials['Email'],
         pass: credentials['Password']
     }
 });
+exports.transporter = transporter;
+let count = 0;
+exports.count = count;
 function mailer({ email, subject, body }) {
     /* create mail options */
     const mailOptions = {
@@ -59,16 +64,35 @@ function mailer({ email, subject, body }) {
         subject: subject,
         text: body
     };
-    /* send mail */
-    return new Promise((resolve, reject) => {
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                reject(error);
-            }
-            else {
-                resolve(info.response);
-            }
+    /* define the number of retries and delay in milliseconds between retries */
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
+    /* send mail with retries */
+    const sendMailWithRetries = (retriesLeft) => {
+        return new Promise((resolve, reject) => {
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    if (retriesLeft > 0) {
+                        /* retry sending the email after a delay */
+                        setTimeout(() => {
+                            sendMailWithRetries(retriesLeft - 1)
+                                .then(resolve)
+                                .catch(reject);
+                        }, retryDelay);
+                    }
+                    else {
+                        /* no more retries left, reject with the final error */
+                        reject(error);
+                    }
+                }
+                else {
+                    // console.log(retriesLeft);
+                    exports.count = count += 1;
+                    resolve(info.response);
+                }
+            });
         });
-    });
+    };
+    return sendMailWithRetries(maxRetries);
 }
-exports.default = mailer;
+exports.mailer = mailer;

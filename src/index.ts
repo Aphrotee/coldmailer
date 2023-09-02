@@ -1,13 +1,12 @@
 import csv from 'csv-parser';
 import fs from 'fs';
-import mailer from './mailer.js';
+import { count, mailer, transporter } from './mailer.js';
 import Readline from 'readline';
 import throwError from './throwError.js';
 
 
 class Coldmailer {
 
-  results: Array<object>;
   tasks: Array<Promise<void>>;
   subject: string;
   message: string;
@@ -17,7 +16,6 @@ class Coldmailer {
   readline: Readline.Interface;
 
   constructor() {
-    this.results = []
     this.tasks = [];
     this.subject = '';
     this.message = '';
@@ -45,20 +43,25 @@ class Coldmailer {
       mailer({ email: data['email'], subject: Subject, body: Body })
         .then(info => {
           console.log('Email sent to ' + data['email']);
-          this.results.push(data);
           resolve();
         })
         .catch(err => {
-          this.results.push(data);
   
           /* catch possible errors when sending emails and throw them with suitable and more understandable error messages */
           if (err.toString().includes("Invalid login")) {
-            throwError(`Error: ${err.message}\n\nThere is an issue with your login credentials,\
+            if (err.toString().includes("Too many login attempts")) {
+              throwError("Error: Too many login attempts, try again later.");
+              // transporter.close();
+            } else {
+              throwError(`Error: ${err.message}\n\nThere is an issue with your login credentials,\
  confirm the credentials (email and password)\
  are correct and that they are properly written in the mailconfig.json.\
  Refer to the README.md for instructions on how to get your login credentials.`);
+              transporter.close();
+            }
           } else if (err.toString().includes("getaddrinfo ENOTFOUND")) {
             throwError("Error: Unable to esablish smtp connection, check your internet connection.");
+            transporter.close();
           }
         });
     });
@@ -104,11 +107,18 @@ class Coldmailer {
   
           /* executes pending tasks (email dissemination) if they exists (if csv file is not empty) */
           if (this.tasks.length > 0) {
-            console.log('\x1b[33m%s\x1b[0m', 'sending emails...');
+            if (this.tasks.length > 100) {
+              throwError("Error: The csv file contains more than 100 rows of data, reducee it.");
+            } else {
+              console.log('\x1b[33m%s\x1b[0m', 'sending emails...\n');
   
-            /* trigger promise fulfilment i.e task execution */
-            Promise.all(this.tasks)
-              .then((val) => console.log('\x1b[32m%s\x1b[0m', 'emails sent!'));
+              /* trigger promise fulfilment i.e task execution */
+              Promise.allSettled(this.tasks)
+                .then((val) => {
+                  console.log('\x1b[32m%s\x1b[0m', `\n${count} emails sent!`);
+                  transporter.close();
+                });
+            }
           } else {
             throwError("Error: There is no data in the csv file you provided, supply a non-empty csv file.");
           }
