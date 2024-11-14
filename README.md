@@ -1,5 +1,5 @@
 # coldmailer
-Coldmailer is a light weight tool that redefines email automation with its streamlined command line interface, designed to effortlessly send emails to countless recipients.
+Coldmailer is a light weight tool that redefines email automation with its streamlined command line interface, designed to effortlessly send custom emails to many recipients.
 
 ## Installation
 Clone the this repository
@@ -11,7 +11,7 @@ Go into the directory:
 `$ cd coldmailer`
 
 You need the latest version of nodejs:
-Download for [windows](https://nodejs.org/en/download), download for [linux](https://nodejs.org/en/download/package-manager)
+Download for [windows](https://nodejs.org/en/download), download for [linux](https://nodejs.org/en/download/package-manager).
 
 `$ npm install`
 
@@ -43,9 +43,14 @@ For a recipient with `name: Anderson, company: Google, email: anderson@gmail.com
 
 `Hi Anderson, I would love an opportunity at Google to enhance my skills while solving cmoplex problems in the society.`
 
-Incase you're wondering how to include an attatchment, yeah you can't.
+Incase you're wondering how to include an attatchment, yeah you can't (for now).
 
 But what you can do is to upload that attachment to google drive (or whatever cloudstorage service you use) make it available to anyone to access and include a link to it in the email.
+
+## Workflow
+Here is a diagram detailing the workflow of coldmailer and how the functions communicate and work together to help you send mails.
+
+![workflow diagram](src/images/workflow.png)
 
 ## Usage
 Run the following commands:
@@ -56,4 +61,4 @@ Run the following commands:
 
 NOTE: Because of the possible internet issues while the program runs, you are limited to sending 100 emails at a time in order to ensure all emails are sent succesfully, so yor csv file should not have more that 100 rows of data.
 
-All errors come with reasons causing them and ways to eliminate such errors.
+All errors come with reasons causing them and ways to resolve such errors.
