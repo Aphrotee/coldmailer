@@ -1,6 +1,6 @@
 # coldmailer
-Coldmailer is a light weight tool that redefines email automation with its streamlined command line interface, designed to effortlessly send custom emails to many recipients.
-
+Coldmailer is a light weight tool that redefines email automation with its streamlined command line interface, designed to effortlessly send custom emails to many recipients.\
+Find the source code [here](src).
 ## Installation
 Clone the this repository
 
