@@ -1,6 +1,6 @@
 import fs from 'fs';
 import nodemailer from 'nodemailer';
-import throwError from './throwError.js';
+import throwError from './throwError';
 import SMTPPool from 'nodemailer/lib/smtp-pool/index.js';
 
 const jsonPath: string = './mailconfig.json'

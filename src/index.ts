@@ -1,8 +1,8 @@
 import csv from 'csv-parser';
 import fs from 'fs';
-import { count, mailer, transporter } from './mailer.js';
+import { count, mailer, transporter } from './mailer';
 import Readline from 'readline';
-import throwError from './throwError.js';
+import throwError from './throwError';
 
 
 class Coldmailer {

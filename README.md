@@ -53,6 +53,11 @@ Here is a diagram detailing the workflow of coldmailer and how the functions com
 ![workflow diagram](src/images/workflow.png)
 
 ## Usage
+
+There are two ways to use Coldmailer: through the Command Line Interface (CLI) or via the API.
+
+### CLI Usage
+
 Run the following commands:
 
 `$ npm run build`
@@ -62,3 +67,38 @@ Run the following commands:
 NOTE: Because of the possible internet issues while the program runs, you are limited to sending 100 emails at a time in order to ensure all emails are sent succesfully, so yor csv file should not have more that 100 rows of data.
 
 All errors come with reasons causing them and ways to resolve such errors.
+
+### API Usage
+
+Coldmailer provides an API endpoint to send emails programmatically.
+
+**1. Start the server:**
+
+First, build the project:
+`$ npm run build`
+
+Then, start the API server:
+`$ npm run serve`
+
+The server will be running on `http://localhost:3000`.
+
+**2. Send Emails:**
+
+Make a `POST` request to the `/send-emails` endpoint with a `multipart/form-data` payload containing the following fields:
+
+*   `subject` (string, required): The subject of the email. You can use `{name}` and `{company}` placeholders.
+*   `message` (string, required): The body of the email. You can use `{name}` and `{company}` placeholders.
+*   `csvFile` (file, required): The CSV file containing recipient data with `name`, `email`, and `company` columns.
+
+**Example using cURL:**
+
+```bash
+curl -X POST http://localhost:3000/send-emails 
+  -F "subject=Invitation for {name}" 
+  -F "message=Hello {name}, we are excited to invite you to an event at {company}." 
+  -F "csvFile=@/path/to/your/data.csv"
+```
+
+Replace `/path/to/your/data.csv` with the actual path to your CSV file.
+
+Upon success, the API will respond with a message indicating how many emails were sent successfully. If there are errors (e.g., invalid CSV format, missing fields), the API will return an appropriate error message.
